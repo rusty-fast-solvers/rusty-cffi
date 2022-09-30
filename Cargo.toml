@@ -1,0 +1,24 @@
+[package]
+name = "rusty-cffi"
+version = "0.0.1"
+authors = ["Timo Betcke"]
+edition = "2021"
+description = "Tools for interfacing with other languages via CFFI."
+license = "BSD-3-Clause"
+homepage = "https://github.com/rusty-fast-solvers/rusty-cffi"
+repository = "https://github.com/rusty-fast-solvers/rusty-cffi"
+readme = "README.md"
+keywords = ["numerics"]
+categories = ["mathematics", "science"]
+
+[lib]
+name = "rusty_cffi"
+crate-type = ["lib", "cdylib"]
+
+[dependencies]
+paste = "1.*"
+libc = "0.2"
+
+
+[package.metadata.maturin]
+python-source = "python"

@@ -1,0 +1,97 @@
+//! Tools for interfacing Rust via CFFI
+
+pub mod containers;
+
+// Specification of data types
+#[derive(PartialEq, Debug, Clone, Copy)]
+#[repr(u8)]
+pub enum DTYPE {
+    /// 32 bit float
+    Float32 = 0,
+    /// 64 bit float
+    Float64 = 1,
+    /// 8 bit signed integer
+    Int8 = 2,
+    /// 32 bit signed integer
+    Int32 = 3,
+    /// 64 bit signed integer
+    Int64 = 4,
+    /// 8 bit unsigned integer
+    Unsigned8 = 5,
+    /// 32 bit unsigned integer
+    Unsigned32 = 6,
+    /// 64 bit unsigned integer
+    Unsigned64 = 7,
+    /// Char type,
+    Char = 8,
+}
+
+// Mutability Property
+#[derive(PartialEq, Debug, Clone, Copy)]
+#[repr(u8)]
+pub enum MUTABILITY {
+    Mutable = 0,
+    NotMutable = 1,
+}
+
+// Ownership Property
+#[derive(PartialEq, Debug, Clone, Copy)]
+#[repr(u8)]
+pub enum OWNERSHIP {
+    Owner = 0,
+    NotOwner = 1,
+}
+
+pub trait ConversionType: 'static {
+    const D: DTYPE;
+    const SIZE: usize;
+}
+
+impl ConversionType for f32 {
+    const D: DTYPE = DTYPE::Float32;
+    const SIZE: usize = 4;
+}
+impl ConversionType for f64 {
+    const D: DTYPE = DTYPE::Float64;
+    const SIZE: usize = 8;
+}
+impl ConversionType for i8 {
+    const D: DTYPE = DTYPE::Int8;
+    const SIZE: usize = 1;
+}
+impl ConversionType for i32 {
+    const D: DTYPE = DTYPE::Int32;
+    const SIZE: usize = 4;
+}
+impl ConversionType for i64 {
+    const D: DTYPE = DTYPE::Int64;
+    const SIZE: usize = 8;
+}
+impl ConversionType for u8 {
+    const D: DTYPE = DTYPE::Unsigned8;
+    const SIZE: usize = 1;
+}
+impl ConversionType for u32 {
+    const D: DTYPE = DTYPE::Unsigned32;
+    const SIZE: usize = 4;
+}
+impl ConversionType for u64 {
+    const D: DTYPE = DTYPE::Unsigned64;
+    const SIZE: usize = 8;
+}
+impl ConversionType for char {
+    const D: DTYPE = DTYPE::Char;
+    const SIZE: usize = 1;
+}
+
+pub fn get_dtype<T: ConversionType>() -> DTYPE {
+    T::D
+}
+
+pub fn assert_dtype<T: ConversionType>(d: DTYPE) {
+    assert_eq!(get_dtype::<T>(), d);
+}
+
+pub fn get_size<T: ConversionType>() -> usize {
+    T::SIZE
+}
