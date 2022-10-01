@@ -22,9 +22,22 @@ pub enum DTYPE {
     Unsigned32 = 6,
     /// 64 bit unsigned integer
     Unsigned64 = 7,
-    /// Char type,
-    Char = 8,
 }
+
+macro_rules! iterate_over_type {
+    ($macro:ident) => {
+        $macro!(f32);
+        $macro!(f64);
+        $macro!(i8);
+        $macro!(i32);
+        $macro!(i64);
+        $macro!(u8);
+        $macro!(u32);
+        $macro!(u64);
+    };
+}
+
+pub(crate) use iterate_over_type;
 
 // Mutability Property
 #[derive(PartialEq, Debug, Clone, Copy)]
@@ -78,10 +91,6 @@ impl ConversionType for u32 {
 impl ConversionType for u64 {
     const D: DTYPE = DTYPE::Unsigned64;
     const SIZE: usize = 8;
-}
-impl ConversionType for char {
-    const D: DTYPE = DTYPE::Char;
-    const SIZE: usize = 1;
 }
 
 pub fn get_dtype<T: ConversionType>() -> DTYPE {
