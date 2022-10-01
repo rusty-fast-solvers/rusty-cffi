@@ -1,0 +1,3 @@
+[parse.expand]
+# Uncomment to enable macro expansion
+# crates=["rusty-cffi"]

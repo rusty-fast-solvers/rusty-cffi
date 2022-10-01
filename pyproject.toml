@@ -1,0 +1,11 @@
+[project]
+name = "rusty-cffi"
+version = "0.0.1"
+dependencies = ["cffi"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "maturin"
+
+[tool.black]
+preview = true

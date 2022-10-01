@@ -4,10 +4,8 @@
 //! is a simple C data structure that can be flexibly converted to
 //! various Rust types.
 
-use crate::iterate_over_type;
 use crate::{assert_dtype, ConversionType, DTYPE, MUTABILITY, OWNERSHIP};
 use libc::{c_void, size_t};
-use paste::paste;
 
 /// A data container for communication with a C ABI.
 ///
@@ -30,10 +28,10 @@ pub struct DataContainer {
     /// [OWNERSHIP::Owner] or [OWNERSHIP::NotOwner].
     /// The underlying data can only be destroyed if
     /// [DataContainer] is owner.
-    owner: OWNERSHIP,
+    is_owner: OWNERSHIP,
     /// Mutability of the underlying data. It is either
     /// [MUTABILITY::Mutable] or [MUTABILITY::NotMutable].
-    mutable: MUTABILITY,
+    is_mutable: MUTABILITY,
     /// A pointer to the underlying data.
     data: *mut c_void,
 }
@@ -46,8 +44,8 @@ impl DataContainer {
             capacity: slice.len(),
             itemsize: crate::get_size::<T>(),
             dtype: crate::get_dtype::<T>(),
-            owner: OWNERSHIP::NotOwner,
-            mutable: MUTABILITY::NotMutable,
+            is_owner: OWNERSHIP::NotOwner,
+            is_mutable: MUTABILITY::NotMutable,
             data: slice.as_ptr() as *mut c_void,
         }
     }
@@ -58,8 +56,8 @@ impl DataContainer {
             capacity: slice.len(),
             itemsize: crate::get_size::<T>(),
             dtype: crate::get_dtype::<T>(),
-            owner: OWNERSHIP::NotOwner,
-            mutable: MUTABILITY::Mutable,
+            is_owner: OWNERSHIP::NotOwner,
+            is_mutable: MUTABILITY::Mutable,
             data: slice.as_ptr() as *mut c_void,
         }
     }
@@ -76,15 +74,15 @@ impl DataContainer {
             capacity,
             itemsize: crate::get_size::<T>(),
             dtype: crate::get_dtype::<T>(),
-            owner: OWNERSHIP::Owner,
-            mutable: MUTABILITY::Mutable,
+            is_owner: OWNERSHIP::Owner,
+            is_mutable: MUTABILITY::Mutable,
             data,
         }
     }
 
     ///
     pub unsafe fn to_vec<T: ConversionType>(self) -> Vec<T> {
-        assert_eq!(self.owner, OWNERSHIP::Owner);
+        assert_eq!(self.is_owner, OWNERSHIP::Owner);
         assert_dtype::<T>(self.dtype);
         Vec::<T>::from_raw_parts(self.data as *mut T, self.nitems, self.capacity)
     }
@@ -95,7 +93,7 @@ impl DataContainer {
     }
 
     pub unsafe fn to_slice_mut<T: ConversionType>(&mut self) -> &'static mut [T] {
-        assert_eq!(self.mutable, MUTABILITY::Mutable);
+        assert_eq!(self.is_mutable, MUTABILITY::Mutable);
         assert_dtype::<T>(self.dtype);
         std::slice::from_raw_parts_mut::<'static, T>(self.data as *mut T, self.nitems)
     }
@@ -105,11 +103,11 @@ impl Drop for DataContainer {
     /// Destroy a data container. If the container owns the
     /// data the corresponding memory is also deallocated.
     fn drop(&mut self) {
-        if let OWNERSHIP::Owner = self.owner {
+        if let OWNERSHIP::Owner = self.is_owner {
             let len = self.nitems * self.itemsize;
             let cap = self.capacity * self.itemsize;
             let vec = unsafe { Vec::<u8>::from_raw_parts(self.data as *mut u8, len, cap) };
-            drop(vec)
+            drop(vec);
         }
     }
 }
@@ -118,17 +116,102 @@ impl Drop for DataContainer {
 #[no_mangle]
 pub extern "C" fn data_container_destroy(_: Option<Box<DataContainer>>) {}
 
-macro_rules! c_new_container {
-    ($dtype:ident) => {
-        paste! {
-            #[doc = "Create a new `" $dtype "` data container."]
-            #[no_mangle]
-            pub extern "C" fn [<data_container_new_ $dtype>](nitems: size_t) -> Box<DataContainer> {
-                Box::new(DataContainer::from_vec(vec![0 as $dtype; nitems]))
-            }
-
-        }
-    };
+/// Create a new f32 data container.
+#[no_mangle]
+pub extern "C" fn data_container_new_f32(nitems: size_t) -> Box<DataContainer> {
+    Box::new(DataContainer::from_vec(vec![0 as f32; nitems]))
 }
 
-iterate_over_type!(c_new_container);
+/// Create a new f64 data container.
+#[no_mangle]
+pub extern "C" fn data_container_new_f64(nitems: size_t) -> Box<DataContainer> {
+    Box::new(DataContainer::from_vec(vec![0 as f64; nitems]))
+}
+
+/// Create a new u8 data container.
+#[no_mangle]
+pub extern "C" fn data_container_new_u8(nitems: size_t) -> Box<DataContainer> {
+    Box::new(DataContainer::from_vec(vec![0 as u8; nitems]))
+}
+
+/// Create a new u32 data container.
+#[no_mangle]
+pub extern "C" fn data_container_new_u32(nitems: size_t) -> Box<DataContainer> {
+    Box::new(DataContainer::from_vec(vec![0 as u32; nitems]))
+}
+
+/// Create a new u64 data container.
+#[no_mangle]
+pub extern "C" fn data_container_new_u64(nitems: size_t) -> Box<DataContainer> {
+    Box::new(DataContainer::from_vec(vec![0 as u64; nitems]))
+}
+
+/// Create a new i8 data container.
+#[no_mangle]
+pub extern "C" fn data_container_new_i8(nitems: size_t) -> Box<DataContainer> {
+    Box::new(DataContainer::from_vec(vec![0 as i8; nitems]))
+}
+
+/// Create a new i32 data container.
+#[no_mangle]
+pub extern "C" fn data_container_new_i32(nitems: size_t) -> Box<DataContainer> {
+    Box::new(DataContainer::from_vec(vec![0 as i32; nitems]))
+}
+
+/// Create a new i64 data container.
+#[no_mangle]
+pub extern "C" fn data_container_new_i64(nitems: size_t) -> Box<DataContainer> {
+    Box::new(DataContainer::from_vec(vec![0 as i64; nitems]))
+}
+
+#[no_mangle]
+pub extern "C" fn get_itemsize(dtype: DTYPE) -> size_t {
+    match dtype {
+        DTYPE::Float32 => crate::get_size::<f32>(),
+        DTYPE::Float64 => crate::get_size::<f64>(),
+        DTYPE::Unsigned8 => crate::get_size::<u8>(),
+        DTYPE::Unsigned32 => crate::get_size::<u32>(),
+        DTYPE::Unsigned64 => crate::get_size::<u64>(),
+        DTYPE::Int8 => crate::get_size::<i8>(),
+        DTYPE::Int32 => crate::get_size::<i32>(),
+        DTYPE::Int64 => crate::get_size::<i64>(),
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn new_from_pointer(
+    ptr: *mut c_void,
+    nitems: size_t,
+    capacity: size_t,
+    dtype: DTYPE,
+    is_mutable: MUTABILITY,
+) -> Box<DataContainer> {
+    Box::new(DataContainer {
+        nitems,
+        capacity,
+        itemsize: get_itemsize(dtype),
+        dtype,
+        is_owner: OWNERSHIP::NotOwner,
+        is_mutable,
+        data: ptr,
+    })
+}
+
+// The following code is not recognized by maturin without macro expansion.
+// However, macro expansion uses the `cargo expand` command, which depends
+// on a nightly toolchain.
+
+// macro_rules! c_new_container {
+//     ($dtype:ident) => {
+//         paste! {
+//             #[doc = "Create a new `" $dtype "` data container."]
+//             #[no_mangle]
+//             pub extern "C" fn [<data_container_new_ $dtype>](nitems: size_t) -> Box<DataContainer> {
+//                 Box::new(DataContainer::from_vec(vec![0 as $dtype; nitems]))
+//             }
+
+//         }
+//     };
+// }
+
+// iterate_over_type!(c_new_container);
