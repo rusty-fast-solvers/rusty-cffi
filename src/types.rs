@@ -102,3 +102,16 @@ pub fn assert_dtype<T: ConversionType>(d: DTYPE) {
 pub fn get_size<T: ConversionType>() -> usize {
     T::SIZE
 }
+
+pub fn get_itemsize(dtype: DTYPE) -> usize {
+    match dtype {
+        DTYPE::Float32 => crate::get_size::<f32>(),
+        DTYPE::Float64 => crate::get_size::<f64>(),
+        DTYPE::Unsigned8 => crate::get_size::<u8>(),
+        DTYPE::Unsigned32 => crate::get_size::<u32>(),
+        DTYPE::Unsigned64 => crate::get_size::<u64>(),
+        DTYPE::Int8 => crate::get_size::<i8>(),
+        DTYPE::Int32 => crate::get_size::<i32>(),
+        DTYPE::Int64 => crate::get_size::<i64>(),
+    }
+}

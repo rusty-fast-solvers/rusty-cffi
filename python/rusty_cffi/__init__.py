@@ -18,60 +18,62 @@ _RUST_TO_PYTHON = {
 }
 
 _PYTHON_TO_RUST = {
-    "float32": (lib.Float32, lib.data_container_new_f32),
-    "float64": (lib.Float64, lib.data_container_new_f64),
-    "int8": (lib.Int8, lib.data_container_new_i8),
-    "int32": (lib.Int32, lib.data_container_new_i32),
-    "int64": (lib.Int64, lib.data_container_new_i64),
-    "uint8": (lib.Unsigned8, lib.data_container_new_u8),
-    "uint32": (lib.Unsigned32, lib.data_container_new_u32),
-    "uint64": (lib.Unsigned64, lib.data_container_new_u64),
+    "float32": (lib.Float32, lib.rusty_data_container_new_f32),
+    "float64": (lib.Float64, lib.rusty_data_container_new_f64),
+    "int8": (lib.Int8, lib.rusty_data_container_new_i8),
+    "int32": (lib.Int32, lib.rusty_data_container_new_i32),
+    "int64": (lib.Int64, lib.rusty_data_container_new_i64),
+    "uint8": (lib.Unsigned8, lib.rusty_data_container_new_u8),
+    "uint32": (lib.Unsigned32, lib.rusty_data_container_new_u32),
+    "uint64": (lib.Unsigned64, lib.rusty_data_container_new_u64),
 }
 
 import numpy as np
 
 
-class DataContainer:
+class RustyDataContainer:
     """A data container interface with Rust."""
 
     def __init__(self, ptr):
         """Initialize new object from pointer."""
         self._ptr = ptr
+        self._nitems = lib.rusty_data_container_get_nitems(ptr)
+        self._itemsize = lib.rusty_data_container_get_itemsize(ptr)
+        self._is_mutable = lib.rusty_data_container_get_is_mutable(ptr)
+        self._is_owner = lib.rusty_data_container_get_is_owner(ptr)
 
         self._data = np.frombuffer(
             ffi.buffer(
-                ffi.cast(_RUST_TO_PYTHON[ptr.dtype][1], ptr.data),
-                ptr.itemsize * ptr.nitems,
+                ffi.cast(
+                    _RUST_TO_PYTHON[lib.rusty_data_container_get_dtype(ptr)][1],
+                    lib.rusty_data_container_get_data(ptr),
+                ),
+                self._itemsize * self._nitems,
             ),
-            dtype = _RUST_TO_PYTHON[ptr.dtype][0]
+            dtype=_RUST_TO_PYTHON[lib.rusty_data_container_get_dtype(ptr)][0],
         )
 
-        if not ptr.is_mutable:
+        if not self._is_mutable:
             self._data.setflags(write=False)
 
     def __del__(self):
         """Destructor."""
-        lib.data_container_destroy(self._ptr)
+        lib.rusty_data_container_destroy(self._ptr)
 
     @property
     def nitems(self):
         """Return the number of items."""
-        return self._ptr.nitems
-
-    @property
-    def capacity(self):
-        """Return the capacity."""
-        return self._ptr.capacity
+        return self._nitems
 
     @property
     def itemsize(self):
         """Return the itemsize in bytes."""
-        return self._ptr.itemsize
+        return self._itemsize
 
     @property
     def dtype(self):
         """Return the type."""
-        return np.dtype(_RUST_TO_PYTHON[self._ptr.dtype][0])
+        return np.dtype(self._dtype)
 
     @property
     def data(self):
@@ -84,7 +86,7 @@ class DataContainer:
         arr_ptr = ffi.cast("void *", arr.ctypes.data)
         is_mutable = 1
         container_ptr = lib.new_from_pointer(
-            arr_ptr, arr.size, arr.size, _PYTHON_TO_RUST[arr.dtype.name][0], is_mutable
+            arr_ptr, arr.size, _PYTHON_TO_RUST[arr.dtype.name][0], is_mutable
         )
         return cls(container_ptr)
 
@@ -94,4 +96,3 @@ class DataContainer:
 
         new_fun = _PYTHON_TO_RUST[dtype][1]
         return cls(new_fun(nitems))
-
