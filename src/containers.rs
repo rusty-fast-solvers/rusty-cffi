@@ -82,7 +82,7 @@ impl RustyDataContainer {
         Box::leak(ptr.unwrap())
     }
 
-    /// Get a mutable reference to a RustyDataContainer from a ptr.
+    /// Get a reference to a RustyDataContainer from a ptr.
     /// Ensures that the destructor of the data container is not run.
     pub fn leak(ptr: Option<Box<RustyDataContainer>>) -> &'static RustyDataContainer {
         Box::leak(ptr.unwrap())
@@ -131,12 +131,10 @@ impl Drop for RustyDataContainer {
     /// Destroy a data container. If the container owns the
     /// data the corresponding memory is also deallocated.
     fn drop(&mut self) {
-        println!("Running destructor.");
         if let OWNERSHIP::Owner = self.is_owner {
             let len = self.nitems * self.itemsize;
             let cap = self.capacity * self.itemsize;
             let vec = unsafe { Vec::<u8>::from_raw_parts(self.data as *mut u8, len, cap) };
-            println!("Destroy contained data.");
             drop(vec);
         }
     }
