@@ -1,7 +1,15 @@
 """Definition of the container interface."""
 
 import numpy as np
-from .rusty_cffi import lib, ffi
+
+lib = None
+ffi = None
+
+def set_context(my_lib, my_ffi):
+    """Provide the right lib and ffi modules."""
+    global lib, ffi
+    lib = my_lib
+    ffi = my_ffi
 
 _RUST_TO_PYTHON = {
     lib.Float32: ("float32", "float *"),
