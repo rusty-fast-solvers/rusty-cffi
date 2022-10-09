@@ -1,6 +1,6 @@
 [package]
 name = "rusty-cffi"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Timo Betcke"]
 edition = "2021"
 description = "Tools for interfacing with other languages via CFFI."
@@ -16,7 +16,6 @@ name = "rusty_cffi"
 crate-type = ["lib", "cdylib"]
 
 [dependencies]
-paste = "1.*"
 libc = "0.2"
 
 

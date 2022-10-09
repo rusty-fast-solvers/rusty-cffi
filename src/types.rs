@@ -20,6 +20,8 @@ pub enum DTYPE {
     Unsigned32 = 6,
     /// 64 bit unsigned integer
     Unsigned64 = 7,
+    /// Machine dependent indexing type
+    Usize = 8,
 }
 
 // macro_rules! iterate_over_type {
@@ -91,6 +93,12 @@ impl ConversionType for u64 {
     const SIZE: usize = 8;
 }
 
+impl ConversionType for usize {
+    const D: DTYPE = DTYPE::Usize;
+    const SIZE: usize = 8;
+}
+
+
 pub fn get_dtype<T: ConversionType>() -> DTYPE {
     T::D
 }
@@ -113,5 +121,6 @@ pub fn get_itemsize(dtype: DTYPE) -> usize {
         DTYPE::Int8 => crate::get_size::<i8>(),
         DTYPE::Int32 => crate::get_size::<i32>(),
         DTYPE::Int64 => crate::get_size::<i64>(),
+        DTYPE::Usize => crate::get_size::<usize>(),
     }
 }

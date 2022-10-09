@@ -1,6 +1,6 @@
 [project]
 name = "rusty-cffi"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = ["cffi"]
 
 [build-system]
