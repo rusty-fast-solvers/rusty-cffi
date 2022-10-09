@@ -62,8 +62,8 @@ impl RustyDataContainer {
     }
 
     // To boxed pointer.
-    pub fn to_box(self) -> Box<RustyDataContainer> {
-        Box::new(self)
+    pub fn to_ptr(self) -> *mut RustyDataContainer {
+        Box::into_raw(Box::new(self))
     }
 
     pub unsafe fn to_vec<T: ConversionType>(mut self) -> Vec<T> {
@@ -77,15 +77,16 @@ impl RustyDataContainer {
 
     /// Get a mutable reference to a RustyDataContainer from a ptr.
     /// Ensures that the destructor of the data container is not run.
-    pub fn leak_mut(ptr: Option<Box<RustyDataContainer>>) -> &'static mut RustyDataContainer {
-        assert_eq!(ptr.as_ref().unwrap().is_mutable, MUTABILITY::Mutable);
-        Box::leak(ptr.unwrap())
+    pub fn leak_mut(ptr: *mut RustyDataContainer) -> &'static mut RustyDataContainer {
+        let ptr_ref = unsafe { ptr.as_mut() }.unwrap();
+        assert_eq!(ptr_ref.is_mutable, MUTABILITY::Mutable);
+        ptr_ref
     }
 
     /// Get a reference to a RustyDataContainer from a ptr.
     /// Ensures that the destructor of the data container is not run.
-    pub fn leak(ptr: Option<Box<RustyDataContainer>>) -> &'static RustyDataContainer {
-        Box::leak(ptr.unwrap())
+    pub fn leak(ptr: *mut RustyDataContainer) -> &'static RustyDataContainer {
+        unsafe { ptr.as_ref() }.unwrap()
     }
 
     /// Create a new owning and mutable container from a vector.
@@ -108,9 +109,7 @@ impl RustyDataContainer {
 
     /// Get a representation of the data as slice.
     /// This method does not take ownership of the container associated with `ptr`.
-    pub unsafe fn as_slice<T: ConversionType>(
-        ptr: Option<Box<RustyDataContainer>>,
-    ) -> &'static [T] {
+    pub unsafe fn as_slice<T: ConversionType>(ptr: *mut RustyDataContainer) -> &'static [T] {
         let container = RustyDataContainer::leak(ptr);
         assert_dtype::<T>(container.dtype);
         std::slice::from_raw_parts::<'static, T>(container.data as *const T, container.nitems)
@@ -119,7 +118,7 @@ impl RustyDataContainer {
     /// Get a representation of the data as mutable slice.
     /// This method does not take ownership of the container associated with `ptr`.
     pub unsafe fn as_slice_mut<T: ConversionType>(
-        ptr: Option<Box<RustyDataContainer>>,
+        ptr: *mut RustyDataContainer,
     ) -> &'static mut [T] {
         let container = RustyDataContainer::leak_mut(ptr);
         assert_eq!(container.is_mutable, MUTABILITY::Mutable);
@@ -142,98 +141,92 @@ impl Drop for RustyDataContainer {
 
 /// Destroy a data container.
 #[no_mangle]
-pub extern "C" fn rusty_data_container_destroy(_: Option<Box<RustyDataContainer>>) {}
+pub extern "C" fn rusty_data_container_destroy(ptr: *mut RustyDataContainer) {
+    unsafe { Box::from_raw(ptr) };
+}
 
 /// Create a new f32 data container.
 #[no_mangle]
-pub extern "C" fn rusty_data_container_new_f32(nitems: size_t) -> Box<RustyDataContainer> {
-    Box::new(RustyDataContainer::from_vec(vec![0 as f32; nitems]))
+pub extern "C" fn rusty_data_container_new_f32(nitems: size_t) -> *mut RustyDataContainer {
+    RustyDataContainer::from_vec(vec![0 as f32; nitems]).to_ptr()
 }
 
 /// Create a new f64 data container.
 #[no_mangle]
-pub extern "C" fn rusty_data_container_new_f64(nitems: size_t) -> Box<RustyDataContainer> {
-    Box::new(RustyDataContainer::from_vec(vec![0 as f64; nitems]))
+pub extern "C" fn rusty_data_container_new_f64(nitems: size_t) -> *mut RustyDataContainer {
+    RustyDataContainer::from_vec(vec![0 as f64; nitems]).to_ptr()
 }
 
 /// Create a new u8 data container.
 #[no_mangle]
-pub extern "C" fn rusty_data_container_new_u8(nitems: size_t) -> Box<RustyDataContainer> {
-    Box::new(RustyDataContainer::from_vec(vec![0 as u8; nitems]))
+pub extern "C" fn rusty_data_container_new_u8(nitems: size_t) -> *mut RustyDataContainer {
+    RustyDataContainer::from_vec(vec![0 as u8; nitems]).to_ptr()
 }
 
 /// Create a new u32 data container.
 #[no_mangle]
-pub extern "C" fn rusty_data_container_new_u32(nitems: size_t) -> Box<RustyDataContainer> {
-    Box::new(RustyDataContainer::from_vec(vec![0 as u32; nitems]))
+pub extern "C" fn rusty_data_container_new_u32(nitems: size_t) -> *mut RustyDataContainer {
+    RustyDataContainer::from_vec(vec![0 as u32; nitems]).to_ptr()
 }
 
 /// Create a new u64 data container.
 #[no_mangle]
-pub extern "C" fn rusty_data_container_new_u64(nitems: size_t) -> Box<RustyDataContainer> {
-    Box::new(RustyDataContainer::from_vec(vec![0 as u64; nitems]))
+pub extern "C" fn rusty_data_container_new_u64(nitems: size_t) -> *mut RustyDataContainer {
+    RustyDataContainer::from_vec(vec![0 as u64; nitems]).to_ptr()
 }
 
 /// Create a new i8 data container.
 #[no_mangle]
-pub extern "C" fn rusty_data_container_new_i8(nitems: size_t) -> Box<RustyDataContainer> {
-    Box::new(RustyDataContainer::from_vec(vec![0 as i8; nitems]))
+pub extern "C" fn rusty_data_container_new_i8(nitems: size_t) -> *mut RustyDataContainer {
+    RustyDataContainer::from_vec(vec![0 as i8; nitems]).to_ptr()
 }
 
 /// Create a new i32 data container.
 #[no_mangle]
-pub extern "C" fn rusty_data_container_new_i32(nitems: size_t) -> Box<RustyDataContainer> {
-    Box::new(RustyDataContainer::from_vec(vec![0 as i32; nitems]))
+pub extern "C" fn rusty_data_container_new_i32(nitems: size_t) -> *mut RustyDataContainer {
+    RustyDataContainer::from_vec(vec![0 as i32; nitems]).to_ptr()
 }
 
 /// Create a new i64 data container.
 #[no_mangle]
-pub extern "C" fn rusty_data_container_new_i64(nitems: size_t) -> Box<RustyDataContainer> {
-    Box::new(RustyDataContainer::from_vec(vec![0 as i64; nitems]))
+pub extern "C" fn rusty_data_container_new_i64(nitems: size_t) -> *mut RustyDataContainer {
+    RustyDataContainer::from_vec(vec![0 as i64; nitems]).to_ptr()
 }
 
 /// Get nitems
 #[no_mangle]
-pub extern "C" fn rusty_data_container_get_nitems(ptr: Option<Box<RustyDataContainer>>) -> size_t {
-    Box::leak(ptr.unwrap()).nitems
+pub extern "C" fn rusty_data_container_get_nitems(ptr: *mut RustyDataContainer) -> size_t {
+    RustyDataContainer::leak(ptr).nitems
 }
 
 /// Get itemsize
 #[no_mangle]
-pub extern "C" fn rusty_data_container_get_itemsize(
-    ptr: Option<Box<RustyDataContainer>>,
-) -> size_t {
-    Box::leak(ptr.unwrap()).itemsize
+pub extern "C" fn rusty_data_container_get_itemsize(ptr: *mut RustyDataContainer) -> size_t {
+    RustyDataContainer::leak(ptr).itemsize
 }
 
 /// Get dtype
 #[no_mangle]
-pub extern "C" fn rusty_data_container_get_dtype(ptr: Option<Box<RustyDataContainer>>) -> DTYPE {
-    Box::leak(ptr.unwrap()).dtype
+pub extern "C" fn rusty_data_container_get_dtype(ptr: *mut RustyDataContainer) -> DTYPE {
+    RustyDataContainer::leak(ptr).dtype
 }
 
 /// Get is_owner
 #[no_mangle]
-pub extern "C" fn rusty_data_container_get_is_owner(
-    ptr: Option<Box<RustyDataContainer>>,
-) -> OWNERSHIP {
-    Box::leak(ptr.unwrap()).is_owner
+pub extern "C" fn rusty_data_container_get_is_owner(ptr: *mut RustyDataContainer) -> OWNERSHIP {
+    RustyDataContainer::leak(ptr).is_owner
 }
 
 /// Get is_mutable
 #[no_mangle]
-pub extern "C" fn rusty_data_container_get_is_mutable(
-    ptr: Option<Box<RustyDataContainer>>,
-) -> MUTABILITY {
-    Box::leak(ptr.unwrap()).is_mutable
+pub extern "C" fn rusty_data_container_get_is_mutable(ptr: *mut RustyDataContainer) -> MUTABILITY {
+    RustyDataContainer::leak(ptr).is_mutable
 }
 
 /// Get data
 #[no_mangle]
-pub extern "C" fn rusty_data_container_get_data(
-    ptr: Option<Box<RustyDataContainer>>,
-) -> *mut c_void {
-    Box::leak(ptr.unwrap()).data
+pub extern "C" fn rusty_data_container_get_data(ptr: *mut RustyDataContainer) -> *mut c_void {
+    RustyDataContainer::leak(ptr).data
 }
 
 #[no_mangle]
@@ -242,8 +235,8 @@ pub extern "C" fn new_from_pointer(
     nitems: size_t,
     dtype: DTYPE,
     is_mutable: MUTABILITY,
-) -> Box<RustyDataContainer> {
-    Box::new(RustyDataContainer {
+) -> *mut RustyDataContainer {
+    RustyDataContainer {
         nitems,
         capacity: nitems,
         itemsize: get_itemsize(dtype) as size_t,
@@ -251,7 +244,8 @@ pub extern "C" fn new_from_pointer(
         is_owner: OWNERSHIP::NotOwner,
         is_mutable,
         data: ptr,
-    })
+    }
+    .to_ptr()
 }
 
 // macro_rules! c_new_container {
