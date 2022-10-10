@@ -98,7 +98,6 @@ impl ConversionType for usize {
     const SIZE: usize = 8;
 }
 
-
 pub fn get_dtype<T: ConversionType>() -> DTYPE {
     T::D
 }

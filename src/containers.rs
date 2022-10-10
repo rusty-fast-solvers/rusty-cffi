@@ -199,7 +199,6 @@ pub extern "C" fn rusty_data_container_new_usize(nitems: size_t) -> Box<RustyDat
     RustyDataContainer::from_vec(vec![0 as usize; nitems]).to_box()
 }
 
-
 /// Get nitems
 #[no_mangle]
 pub extern "C" fn rusty_data_container_get_nitems(ptr: Option<Box<RustyDataContainer>>) -> size_t {
@@ -262,4 +261,3 @@ pub extern "C" fn new_from_pointer(
     }
     .to_box()
 }
-
